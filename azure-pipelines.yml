@@ -1,0 +1,69 @@
+
+trigger:
+- master
+
+resources: 
+- repo: self
+
+variables:
+  acrServiceConnexion: '' # Azure Container Registry service connexion
+  aksServiceConnexion: '' #  Azure Kubernetes Service service connexion
+  containerRegistry: '' # your container registry name xxx.azurecr.io
+  imageName: 'gowebserver'
+  dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
+  tag: '$(Build.BuildId)'
+  vmImageName: 'ubuntu-latest' # Agent VM image name
+  environment: 'dev'
+  manifestFile: '$(System.ArtifactsDirectory)/manifests/deploy.yaml'
+  namespace: 'gowebserver'
+
+
+# Stage 1 Build and push the docker image to ACR
+stages:
+- stage: Build
+  displayName: Build and push stage
+  jobs:
+  - job: 'BuildAndPush'
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - task: Docker@2
+      inputs:
+        containerRegistry: $(acrServiceConnexion)
+        repository: $(imageName)
+        command: 'buildAndPush'
+        Dockerfile: $(dockerfilePath)
+        tags:
+          $(tag)
+    - task: PublishPipelineArtifact@0
+      inputs:
+        artifactName: 'manifests'
+        targetPath: 'manifests'
+
+
+# Stage 2 Deploy into K8s cluster
+- stage: Deploy
+  jobs:
+  - deployment: 'DeployToAKS'
+    pool:
+      vmImage: $(vmImageName)
+    environment: $(environment)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - task: DownloadPipelineArtifact@1
+              inputs:
+                buildType: 'current'
+                artifactName: 'manifests'
+                targetPath: '$(System.ArtifactsDirectory)/manifests'
+            - task: KubernetesManifest@0
+              inputs:
+                action: 'deploy'
+                kubernetesServiceConnection: $(aksServiceConnexion)
+                namespace: $(namespace)
+                manifests: $(manifestFile)
+                containers: '$(containerRegistry)/$(imageName):$(tag)'
+
+
+
