@@ -1,0 +1,44 @@
+
+# Service manifest
+apiVersion: v1
+kind: Service
+metadata:
+  name: gowebserver
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: gowebserver
+  type: LoadBalancer
+
+---
+
+# Deployment manifest
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gowebserver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gowebserver
+  template:
+    metadata:
+      labels:
+        app: gowebserver
+    spec:
+      containers:
+      - name: gowebserver
+        image: kdidireg.azurecr.io/gowebserver
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1024Mi
+          limits:
+            cpu: 1000m
+            memory: 2048Mi
