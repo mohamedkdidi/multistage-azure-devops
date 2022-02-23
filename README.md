@@ -7,8 +7,8 @@ This example based on an application Go (HTTP server) with multi-step Dockerfile
 
 Make sure you set your service connections for Azure Container Registry and Azure Kubernetes Service in azure-pipelines.yml file using this variables:
 
-'''
+```
   acrServiceConnexion: '' # Azure Container Registry service connexion
   aksServiceConnexion: '' #  Azure Kubernetes Service service connexion
   containerRegistry:   '' # your container registry name xxx.azurecr.io
-'''
+```
