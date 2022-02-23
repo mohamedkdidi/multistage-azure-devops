@@ -17,9 +17,12 @@ jobs:
       uses: actions/setup-go@v2
       with:
         go-version: 1.17
-
+    # Generate executable file
     - name: Build
-      run: go build -v ./...
+      run: go build -o server.out main.go
 
-    - name: Test
-      run: go test -v ./...
+    - name: Beta-Release
+      uses: actions/upload-artifact@v2
+      with:
+        name: server-beta.out
+        path: server.out
